@@ -6,10 +6,10 @@ import pickle as cpickle
 import agent as Agent
 from utils import print_summary
 
-NUM_BATCH = 1000
+NUM_BATCH = 2
 TEST_FREQ = 2
 
-num_test_episodes = 100
+num_test_episodes = 1
 
 def run_HAC(FLAGS,env,agent):
 

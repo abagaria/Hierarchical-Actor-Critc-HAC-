@@ -3,6 +3,8 @@ from experience_buffer import ExperienceBuffer
 from actor import Actor
 from critic import Critic
 from time import sleep
+import pdb
+
 
 class Layer():
     def __init__(self, layer_number, FLAGS, env, sess, agent_params):
@@ -80,7 +82,10 @@ class Layer():
 
         # Add noise to action and ensure remains within bounds
         for i in range(len(action)):
-            action[i] += np.random.normal(0,self.noise_perc[i] * action_bounds[i])
+            try:
+                action[i] += np.random.normal(0,self.noise_perc[i] * 1.)
+            except:
+                pdb.set_trace()
 
             action[i] = max(min(action[i], action_bounds[i]+action_offset[i]), -action_bounds[i]+action_offset[i])
 
