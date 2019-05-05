@@ -12,7 +12,7 @@ class PointMazeEnv(Environment):
 
         self.action_dim = self.mdp.action_space_size()
         self.state_dim = self.mdp.state_space_size()
-        self.action_bounds = self.sim.model.actuator_ctrlrange[:, 1]
+        self.action_bounds = np.array([1., 1.]) # self.sim.model.actuator_ctrlrange[:, 1]
         self.action_offset = np.zeros((len(self.action_bounds)))
         self.subgoal_dim = 2
         self.subgoal_bounds = [[-2, 10], [-2, 10]]
@@ -42,9 +42,11 @@ class PointMazeEnv(Environment):
         self.project_state_to_end_goal = self.project_to_goal
         self.project_state_to_subgoal = self.project_to_goal
 
-        self.max_actions = 2000
+        self.max_actions = 1000
 
         self.debug_actions = []
+        self.debug_rewards = []
+        self.cumulative_reward = 0.
 
         self.name = "point-maze"
         Environment.__init__(self, self.name)
@@ -63,8 +65,10 @@ class PointMazeEnv(Environment):
         return self.get_state()
 
     def execute_action(self, action):
-        self.debug_actions.append(np.copy(action))
         reward, next_state = self.mdp.execute_agent_action(action)
+        self.cumulative_reward += reward
+        self.debug_actions.append(np.copy(action))
+        self.debug_rewards.append(reward)
         return self.get_state()
 
     def display_end_goal(self, end_goal):

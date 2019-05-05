@@ -139,7 +139,7 @@ class Agent():
 
         # Select initial state from in initial state space, defined in environment.py
         self.current_state = env.reset_sim()
-        # print("Initial State: ", self.current_state)
+        print("Initial State: ", self.current_state)
 
         # Reset step counter
         self.steps_taken = 0

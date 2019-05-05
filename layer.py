@@ -355,7 +355,7 @@ class Layer():
             attempts_made += 1
 
             # Print if goal from current layer as been achieved
-            if goal_status[self.layer_number]:
+            if goal_status[self.layer_number] and agent.FLAGS.verbose:
                 if self.layer_number < agent.FLAGS.layers - 1:
                     print("SUBGOAL ACHIEVED")
                 print("\nEpisode %d, Layer %d, Attempt %d Goal Achieved" % (episode_num, self.layer_number, attempts_made))

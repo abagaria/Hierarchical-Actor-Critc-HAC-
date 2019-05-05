@@ -28,7 +28,7 @@ def design_agent_and_env(FLAGS):
     FLAGS.time_scale = 10    # Enter max sequence length in which each policy will specialize
 
     # Enter max number of atomic actions.  This will typically be FLAGS.time_scale**(FLAGS.layers).  However, in the UR5 Reacher task, we use a shorter episode length.
-    max_actions = FLAGS.time_scale**(FLAGS.layers-1)*6     
+    max_actions = FLAGS.time_scale**(FLAGS.layers-1)*6
 
     timesteps_per_action = 15    # Provide the number of time steps per atomic action.
 
@@ -136,7 +136,7 @@ def design_agent_and_env(FLAGS):
     agent_params["episodes_to_store"] = 500
 
     # Provide training schedule for agent.  Training by default will alternate between exploration and testing.  Hyperparameter below indicates number of exploration episodes.  Testing occurs for 100 episodes.  To change number of testing episodes, go to "ran_HAC.py". 
-    agent_params["num_exploration_episodes"] = 50
+    agent_params["num_exploration_episodes"] = 1
 
     # For other relavent agent hyperparameters, please refer to the "agent.py" and "layer.py" files
 
@@ -148,7 +148,7 @@ def design_agent_and_env(FLAGS):
 
     # Instantiate and return agent and environment
     # env = Environment(model_name, goal_space_train, goal_space_test, project_state_to_end_goal, end_goal_thresholds, initial_state_space, subgoal_bounds, project_state_to_subgoal, subgoal_thresholds, max_actions, timesteps_per_action, FLAGS.show)
-    env = PointMazeEnv(seed=0, render=False )
+    env = PointMazeEnv(seed=0, render=False)
 
     agent = Agent(FLAGS,env,agent_params)
 

@@ -55,6 +55,8 @@ def parse_options():
         help='Print summary of each transition'
     )
 
+    parser.add_argument("--seed", type=int, help="Random seed associated with this run")
+
     FLAGS, unparsed = parser.parse_known_args()
 
 

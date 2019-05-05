@@ -5,13 +5,14 @@
 import pickle as cpickle
 import agent as Agent
 from utils import print_summary
+import pdb
 
-NUM_BATCH = 2
+NUM_BATCH = 600
 TEST_FREQ = 2
 
 num_test_episodes = 1
 
-def run_HAC(FLAGS,env,agent):
+def run_HAC(FLAGS,env,agent, seed):
 
     # Print task summary
     print_summary(FLAGS,env)
@@ -20,6 +21,9 @@ def run_HAC(FLAGS,env,agent):
     mix_train_test = False
     if not FLAGS.test and not FLAGS.train_only:
         mix_train_test = True
+
+    training_rewards = []
+    validation_rewards = []
      
     for batch in range(NUM_BATCH):
 
@@ -37,16 +41,27 @@ def run_HAC(FLAGS,env,agent):
         for episode in range(num_episodes):
             
             print("\nBatch %d, Episode %d" % (batch, episode))
+            env.cumulative_reward = 0.
             
             # Train for an episode
             success = agent.train(env, episode)
+
+            print("\t Got reward = {}".format(env.cumulative_reward))
 
             if success:
                 print("Batch %d, Episode %d End Goal Achieved\n" % (batch, episode))
                 
                 # Increment successful episode counter if applicable
                 if mix_train_test and batch % TEST_FREQ == 0:
-                    successful_episodes += 1            
+                    successful_episodes += 1
+
+            # Based on whether we were training or testing, log the reward accumulated during the episode
+            if mix_train_test and batch % TEST_FREQ == 0:
+                validation_rewards.append(env.cumulative_reward)
+            else:
+                training_rewards.append(env.cumulative_reward)
+
+            env.cumulative_reward = 0.
 
         # Save agent
         agent.save_model(episode)
@@ -62,9 +77,7 @@ def run_HAC(FLAGS,env,agent):
 
             print("\n--- END TESTING ---\n")
 
-            
-
-    
-    
-
-     
+    with open("{}_{}_layer_HAC_training_scores_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
+        cpickle.dump(training_rewards, f)
+    with open("{}_{}_layer_HAC_validation_scores_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
+        cpickle.dump(validation_rewards, f)
