@@ -5,7 +5,7 @@ class Environment:
 	def get_state(self):
 		pass
 
-	def reset_sim(self):
+	def reset_sim(self, training_time):
 		pass
 
 	def execute_action(self, action):

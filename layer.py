@@ -83,7 +83,7 @@ class Layer():
         # Add noise to action and ensure remains within bounds
         for i in range(len(action)):
             try:
-                action[i] += np.random.normal(0,self.noise_perc[i] * 1.)
+                action[i] += np.random.normal(0,self.noise_perc[i] * action_bounds[i])
             except:
                 pdb.set_trace()
 

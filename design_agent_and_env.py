@@ -5,6 +5,7 @@ This file provides the template for designing the agent and environment.  The be
 import numpy as np
 from environment import Environment
 from point_maze_env import PointMazeEnv
+from ant_maze_env import AntMazeEnv
 from utils import check_validity
 from agent import Agent
 
@@ -30,7 +31,7 @@ def design_agent_and_env(FLAGS):
     # Enter max number of atomic actions.  This will typically be FLAGS.time_scale**(FLAGS.layers).  However, in the UR5 Reacher task, we use a shorter episode length.
     max_actions = FLAGS.time_scale**(FLAGS.layers-1)*6
 
-    timesteps_per_action = 15    # Provide the number of time steps per atomic action.
+    timesteps_per_action = 15    # Provide the number of time steps per atomic action. (frame skip)
 
 
     """
@@ -129,7 +130,7 @@ def design_agent_and_env(FLAGS):
     agent_params["subgoal_penalty"] = -FLAGS.time_scale     
 
     # Define exploration noise that is added to both subgoal actions and atomic actions.  Noise added is Gaussian N(0, noise_percentage * action_dim_range)    
-    agent_params["atomic_noise"] = [0.1 for i in range(2)]
+    agent_params["atomic_noise"] = [0.1 for i in range(8)]
     agent_params["subgoal_noise"] = [0.03 for i in range(2)]
 
     # Define number of episodes of transitions to be stored by each level of the hierarchy
@@ -148,7 +149,8 @@ def design_agent_and_env(FLAGS):
 
     # Instantiate and return agent and environment
     # env = Environment(model_name, goal_space_train, goal_space_test, project_state_to_end_goal, end_goal_thresholds, initial_state_space, subgoal_bounds, project_state_to_subgoal, subgoal_thresholds, max_actions, timesteps_per_action, FLAGS.show)
-    env = PointMazeEnv(seed=0, render=False)
+    # env = PointMazeEnv(seed=0, render=False)
+    env = AntMazeEnv(seed=FLAGS.seed, vary_init=True, dense_reward=False, render=False)
 
     agent = Agent(FLAGS,env,agent_params)
 

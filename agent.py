@@ -138,8 +138,8 @@ class Agent():
         print("Next End Goal: ", self.goal_array[self.FLAGS.layers - 1])
 
         # Select initial state from in initial state space, defined in environment.py
-        self.current_state = env.reset_sim()
-        print("Initial State: ", self.current_state)
+        self.current_state = env.reset_sim(training_time=(not self.FLAGS.test))
+        print("Initial State: ", self.current_state[:2])
 
         # Reset step counter
         self.steps_taken = 0

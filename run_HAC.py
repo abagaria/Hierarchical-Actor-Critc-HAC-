@@ -6,11 +6,13 @@ import pickle as cpickle
 import agent as Agent
 from utils import print_summary
 import pdb
+import numpy as np
 
-NUM_BATCH = 600
-TEST_FREQ = 2
 
-num_test_episodes = 1
+NUM_BATCH = 2531  # Giving 30 extra episodes of training to compensate for the extra training length for skill chaining
+TEST_FREQ = 10
+
+num_test_episodes = 5
 
 def run_HAC(FLAGS,env,agent, seed):
 
@@ -38,6 +40,9 @@ def run_HAC(FLAGS,env,agent, seed):
             # Reset successful episode counter
             successful_episodes = 0
 
+            # Test rewards
+            test_rewards = []
+
         for episode in range(num_episodes):
             
             print("\nBatch %d, Episode %d" % (batch, episode))
@@ -57,7 +62,7 @@ def run_HAC(FLAGS,env,agent, seed):
 
             # Based on whether we were training or testing, log the reward accumulated during the episode
             if mix_train_test and batch % TEST_FREQ == 0:
-                validation_rewards.append(env.cumulative_reward)
+                test_rewards.append(env.cumulative_reward)
             else:
                 training_rewards.append(env.cumulative_reward)
 
@@ -69,9 +74,15 @@ def run_HAC(FLAGS,env,agent, seed):
         # Finish evaluating policy if tested prior batch
         if mix_train_test and batch % TEST_FREQ == 0:
 
+            # Average over the N test rollouts
+            average_test_score = np.mean(test_rewards)
+            validation_rewards.append(average_test_score)
+            test_rewards = []
+
             # Log performance
             success_rate = successful_episodes / num_test_episodes * 100
             print("\nTesting Success Rate %.2f%%" % success_rate)
+            print("\nAverage test Score = {:.2f}".format(average_test_score))
             agent.log_performance(success_rate)
             agent.FLAGS.test = False
 
