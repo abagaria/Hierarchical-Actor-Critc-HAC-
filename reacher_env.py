@@ -62,7 +62,7 @@ class ReacherEnv(Environment):
     def get_state(self):
         return self.mdp.cur_state.features()
 
-    def reset_sim(self):
+    def reset_sim(self, training_time):
         self.mdp.reset()
         return self.get_state()
 

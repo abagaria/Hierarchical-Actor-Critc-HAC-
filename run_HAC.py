@@ -9,8 +9,8 @@ import pdb
 import numpy as np
 
 
-NUM_BATCH = 5600
-TEST_FREQ = 10
+NUM_BATCH = 400
+TEST_FREQ = 2
 
 num_test_episodes = 1
 
