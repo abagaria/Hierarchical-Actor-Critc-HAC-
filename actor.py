@@ -1,12 +1,11 @@
 import tensorflow as tf
 import numpy as np
 from utils import layer
-import pdb
 
 
 class Actor():
 
-    def __init__(self, 
+    def __init__(self,
             sess,
             env,
             batch_size,
@@ -25,14 +24,14 @@ class Actor():
             # Determine symmetric range of subgoal space and offset
             self.action_space_bounds = env.subgoal_bounds_symmetric
             self.action_offset = env.subgoal_bounds_offset
-     
-        # Dimensions of action will depend on layer level     
+
+        # Dimensions of action will depend on layer level
         if layer_number == 0:
             self.action_space_size = env.action_dim
         else:
             self.action_space_size = env.subgoal_dim
 
-        self.actor_name = 'actor_' + str(layer_number) 
+        self.actor_name = 'actor_' + str(layer_number)
 
         # Dimensions of goal placeholder will differ depending on layer level
         if layer_number == FLAGS.layers - 1:
@@ -45,8 +44,9 @@ class Actor():
         self.learning_rate = learning_rate
         # self.exploration_policies = exploration_policies
         self.tau = tau
-        self.batch_size = batch_size
-        
+        # self.batch_size = batch_size
+        self.batch_size = tf.placeholder(tf.float32)
+
         self.state_ph = tf.placeholder(tf.float32, shape=(None, self.state_dim))
         self.goal_ph = tf.placeholder(tf.float32, shape=(None, self.goal_dim))
         self.features_ph = tf.concat([self.state_ph, self.goal_ph], axis=1)
@@ -57,7 +57,7 @@ class Actor():
         # Target network code "repurposed" from Patrick Emani :^)
         self.weights = [v for v in tf.trainable_variables() if self.actor_name in v.op.name]
         # self.num_weights = len(self.weights)
-        
+
         # Create target actor network
         self.target = self.create_nn(self.features_ph, name = self.actor_name + '_target')
         self.target_weights = [v for v in tf.trainable_variables() if self.actor_name in v.op.name][len(self.weights):]
@@ -66,7 +66,7 @@ class Actor():
 	    [self.target_weights[i].assign(tf.multiply(self.weights[i], self.tau) +
                                                   tf.multiply(self.target_weights[i], 1. - self.tau))
                     for i in range(len(self.target_weights))]
-	
+
         self.action_derivs = tf.placeholder(tf.float32, shape=(None, self.action_space_size))
         self.unnormalized_actor_gradients = tf.gradients(self.infer, self.weights, -self.action_derivs)
         self.policy_gradient = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
@@ -93,12 +93,13 @@ class Actor():
 
         return actions
 
-    def update(self, state, goal, action_derivs):
+    def update(self, state, goal, action_derivs, next_batch_size):
         weights, policy_grad, _ = self.sess.run([self.weights, self.policy_gradient, self.train],
                 feed_dict={
                     self.state_ph: state,
                     self.goal_ph: goal,
-                    self.action_derivs: action_derivs
+                    self.action_derivs: action_derivs,
+                    self.batch_size: next_batch_size
                 })
 
         return len(weights)
@@ -107,7 +108,7 @@ class Actor():
 
     # def create_nn(self, state, goal, name='actor'):
     def create_nn(self, features, name=None):
-        
+
         if name is None:
             name = self.actor_name
 
@@ -123,5 +124,3 @@ class Actor():
         output = tf.tanh(fc4) * self.action_space_bounds + self.action_offset
 
         return output
- 
-       

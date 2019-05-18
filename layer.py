@@ -3,8 +3,6 @@ from experience_buffer import ExperienceBuffer
 from actor import Actor
 from critic import Critic
 from time import sleep
-import pdb
-
 
 class Layer():
     def __init__(self, layer_number, FLAGS, env, sess, agent_params):
@@ -30,7 +28,7 @@ class Layer():
         self.episodes_to_store = agent_params["episodes_to_store"]
 
         # Set number of transitions to serve as replay goals during goal replay
-        self.num_replay_goals = 3
+        self.num_replay_goals = 2
 
         # Number of the transitions created for each attempt (i.e, action replay + goal replay + subgoal testing)
         if self.layer_number == 0:
@@ -82,10 +80,7 @@ class Layer():
 
         # Add noise to action and ensure remains within bounds
         for i in range(len(action)):
-            try:
-                action[i] += np.random.normal(0,self.noise_perc[i] * action_bounds[i])
-            except:
-                pdb.set_trace()
+            action[i] += np.random.normal(0,self.noise_perc[i] * action_bounds[i])
 
             action[i] = max(min(action[i], action_bounds[i]+action_offset[i]), -action_bounds[i]+action_offset[i])
 
@@ -156,7 +151,9 @@ class Layer():
 
         # Transition will take the form [old state, hindsight_action, reward, next_state, goal, terminate boolean, None]
         transition = [self.current_state, hindsight_action, reward, next_state, self.goal, finished, None]
-        # print("AR Trans: ", transition)
+
+        if self.FLAGS.all_trans or self.FLAGS.hind_action:
+            print("\nLevel %d Hindsight Action: " % self.layer_number, transition)
 
         # Add action replay transition to layer's replay buffer
         self.replay_buffer.add(np.copy(transition))
@@ -173,7 +170,9 @@ class Layer():
             hindsight_goal = env.project_state_to_subgoal(env.sim, next_state)
 
         transition = [self.current_state, hindsight_action, None, next_state, None, None, hindsight_goal]
-        # print("\nPrelim GR A: ", transition)
+
+        if self.FLAGS.all_trans or self.FLAGS.prelim_HER:
+            print("\nLevel %d Prelim HER: " % self.layer_number, transition)
 
         self.temp_goal_replay_storage.append(np.copy(transition))
 
@@ -215,26 +214,26 @@ class Layer():
         if num_trans < self.num_replay_goals:
             num_replay_goals = num_trans
 
-        """
-        if self.layer_number == 1:
-            print("\n\nPerforming Goal Replay\n\n")
+
+        if self.FLAGS.all_trans or self.FLAGS.HER:
+            print("\n\nPerforming Goal Replay for Level %d\n\n" % self.layer_number)
             print("Num Trans: ", num_trans, ", Num Replay Goals: ", num_replay_goals)
-        """
+
 
         indices = np.zeros((num_replay_goals))
         indices[:num_replay_goals-1] = np.random.randint(num_trans,size=num_replay_goals-1)
         indices[num_replay_goals-1] = num_trans - 1
         indices = np.sort(indices)
 
-        # if self.layer_number == 1:
-            # print("Selected Indices: ", indices)
+        if self.FLAGS.all_trans or self.FLAGS.HER:
+            print("Selected Indices: ", indices)
 
         # For each selected transition, update the goal dimension of the selected transition and all prior transitions by using the next state of the selected transition as the new goal.  Given new goal, update the reward and finished boolean as well.
         for i in range(len(indices)):
             trans_copy = np.copy(self.temp_goal_replay_storage)
 
-            # if self.layer_number == 1:
-                # print("GR Iteration: %d, Index %d" % (i, indices[i]))
+            if self.FLAGS.all_trans or self.FLAGS.HER:
+                print("GR Iteration: %d, Index %d" % (i, indices[i]))
 
             new_goal = trans_copy[int(indices[i])][6]
             # for index in range(int(indices[i])+1):
@@ -252,9 +251,9 @@ class Layer():
                     trans_copy[index][5] = False
 
                 # Add finished transition to replay buffer
-                # if self.layer_number == 1:
-                    # print("\nNew Goal: ", new_goal)
-                    # print("Upd Trans %d: " % index, trans_copy[index])
+                if self.FLAGS.all_trans or self.FLAGS.HER:
+                    print("\nNew Goal: ", new_goal)
+                    print("Upd Trans %d: " % index, trans_copy[index])
 
                 self.replay_buffer.add(trans_copy[index])
 
@@ -267,6 +266,9 @@ class Layer():
     def penalize_subgoal(self, subgoal, next_state, high_level_goal_achieved):
 
         transition = [self.current_state, subgoal, self.subgoal_penalty, next_state, self.goal, True, None]
+
+        if self.FLAGS.all_trans or self.FLAGS.penalty:
+            print("Level %d Penalty Trans: " % self.layer_number, transition)
 
         self.replay_buffer.add(np.copy(transition))
 
@@ -323,11 +325,14 @@ class Layer():
             # Select action to achieve goal state using epsilon-greedy policy or greedy policy if in test mode
             action, action_type, next_subgoal_test = self.choose_action(agent, env, subgoal_test)
 
-            """
-            if self.layer_number == agent.FLAGS.layers - 1:
+            if self.FLAGS.Q_values:
                 # print("\nLayer %d Action: " % self.layer_number, action)
-                print("Q-Value: ", self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(action,(1,len(action)))))
-            """
+                print("Layer %d Q-Value: " % self.layer_number, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(action,(1,len(action)))))
+                if self.layer_number == 2:
+                    test_action = np.copy(action)
+                    test_action[:3] = self.goal
+                    print("Layer %d Goal Q-Value: " % self.layer_number, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(test_action,(1,len(test_action)))))
+
 
             # If next layer is not bottom level, propose subgoal for next layer to achieve and determine whether that subgoal should be tested
             if self.layer_number > 0:
@@ -339,6 +344,8 @@ class Layer():
             # If layer is bottom level, execute low-level action
             else:
                 next_state = env.execute_action(action)
+                # print("Current Velo: ", env.sim.data.qvel[:2])
+                # sleep(1)
 
                 # Increment steps taken
                 agent.steps_taken += 1
@@ -355,7 +362,7 @@ class Layer():
             attempts_made += 1
 
             # Print if goal from current layer as been achieved
-            if goal_status[self.layer_number] and agent.FLAGS.verbose:
+            if goal_status[self.layer_number] and self.FLAGS.verbose:
                 if self.layer_number < agent.FLAGS.layers - 1:
                     print("SUBGOAL ACHIEVED")
                 print("\nEpisode %d, Layer %d, Attempt %d Goal Achieved" % (episode_num, self.layer_number, attempts_made))
@@ -395,7 +402,7 @@ class Layer():
             # Print summary of transition
             if agent.FLAGS.verbose:
 
-                print("\nEpisode %d, Training Layer %d, Attempt %d" % (episode_num, self.layer_number,attempts_made))
+                print("\nEpisode %d, Level %d, Attempt %d" % (episode_num, self.layer_number,attempts_made))
                 # print("Goal Array: ", agent.goal_array, "Max Lay Achieved: ", max_lay_achieved)
                 print("Old State: ", self.current_state)
                 print("Hindsight Action: ", hindsight_action)
@@ -446,13 +453,16 @@ class Layer():
 
         for _ in range(num_updates):
             # Update weights of non-target networks
-            if self.replay_buffer.size >= self.batch_size:
+            # if self.replay_buffer.size >= self.batch_size:
+            if self.replay_buffer.size > 250:
                 old_states, actions, rewards, new_states, goals, is_terminals = self.replay_buffer.get_batch()
+
+                next_batch_size = min(self.replay_buffer.size, self.replay_buffer.batch_size)
 
 
                 self.critic.update(old_states, actions, rewards, new_states, goals, self.actor.get_action(new_states,goals), is_terminals)
                 action_derivs = self.critic.get_gradients(old_states, goals, self.actor.get_action(old_states, goals))
-                self.actor.update(old_states, goals, action_derivs)
+                self.actor.update(old_states, goals, action_derivs, next_batch_size)
 
         """
         # To use target networks comment for loop above and uncomment for loop below

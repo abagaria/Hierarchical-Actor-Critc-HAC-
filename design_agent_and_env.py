@@ -26,7 +26,7 @@ def design_agent_and_env(FLAGS):
 
     FLAGS.layers = 3    # Enter number of levels in agent hierarchy
 
-    FLAGS.time_scale = 10    # Enter max sequence length in which each policy will specialize
+    FLAGS.time_scale = 13    # Enter max sequence length in which each policy will specialize
 
     # Enter max number of atomic actions.  This will typically be FLAGS.time_scale**(FLAGS.layers).  However, in the UR5 Reacher task, we use a shorter episode length.
     max_actions = FLAGS.time_scale**(FLAGS.layers-1)*6
@@ -131,7 +131,7 @@ def design_agent_and_env(FLAGS):
 
     # Define exploration noise that is added to both subgoal actions and atomic actions.  Noise added is Gaussian N(0, noise_percentage * action_dim_range)    
     agent_params["atomic_noise"] = [0.1 for i in range(8)]
-    agent_params["subgoal_noise"] = [0.03 for i in range(2)]
+    agent_params["subgoal_noise"] = [0.1 for i in range(2)]
 
     # Define number of episodes of transitions to be stored by each level of the hierarchy
     agent_params["episodes_to_store"] = 500

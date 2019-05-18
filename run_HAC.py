@@ -9,15 +9,17 @@ import pdb
 import numpy as np
 
 
-NUM_BATCH = 2531  # Giving 30 extra episodes of training to compensate for the extra training length for skill chaining
+NUM_BATCH = 5600
 TEST_FREQ = 10
 
-num_test_episodes = 5
+num_test_episodes = 1
 
 def run_HAC(FLAGS,env,agent, seed):
 
     # Print task summary
     print_summary(FLAGS,env)
+
+    total_episodes = 0
     
     # Determine training mode.  If not testing and not solely training, interleave training and testing to track progress
     mix_train_test = False
@@ -45,11 +47,11 @@ def run_HAC(FLAGS,env,agent, seed):
 
         for episode in range(num_episodes):
             
-            print("\nBatch %d, Episode %d" % (batch, episode))
+            print("\nBatch %d, Episode %d, Total Episodes: %d" % (batch, episode, total_episodes))
             env.cumulative_reward = 0.
             
             # Train for an episode
-            success = agent.train(env, episode)
+            success = agent.train(env, episode, total_episodes)
 
             print("\t Got reward = {}".format(env.cumulative_reward))
 
@@ -59,6 +61,9 @@ def run_HAC(FLAGS,env,agent, seed):
                 # Increment successful episode counter if applicable
                 if mix_train_test and batch % TEST_FREQ == 0:
                     successful_episodes += 1
+
+            if FLAGS.train_only or (mix_train_test and batch % TEST_FREQ != 0):
+                total_episodes += 1
 
             # Based on whether we were training or testing, log the reward accumulated during the episode
             if mix_train_test and batch % TEST_FREQ == 0:
