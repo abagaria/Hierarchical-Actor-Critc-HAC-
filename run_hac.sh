@@ -1,6 +1,6 @@
 # !/bin/bash
 
-for seed in {0..9}
+for seed in {0..4}
 do
     echo $seed
     python initialize_HAC.py --retrain --seed $seed
