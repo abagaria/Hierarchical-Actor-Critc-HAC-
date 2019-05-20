@@ -28,6 +28,9 @@ def run_HAC(FLAGS,env,agent, seed):
 
     training_rewards = []
     validation_rewards = []
+
+    training_durations = []
+    validation_durations = []
      
     for batch in range(NUM_BATCH):
 
@@ -44,11 +47,13 @@ def run_HAC(FLAGS,env,agent, seed):
 
             # Test rewards
             test_rewards = []
+            test_durations = []
 
         for episode in range(num_episodes):
             
             print("\nBatch %d, Episode %d, Total Episodes: %d" % (batch, episode, total_episodes))
             env.cumulative_reward = 0.
+            env.cumulative_duration = 0
             
             # Train for an episode
             success = agent.train(env, episode, total_episodes)
@@ -68,8 +73,10 @@ def run_HAC(FLAGS,env,agent, seed):
             # Based on whether we were training or testing, log the reward accumulated during the episode
             if mix_train_test and batch % TEST_FREQ == 0:
                 test_rewards.append(env.cumulative_reward)
+                test_durations.append(env.cumulative_duration)
             else:
                 training_rewards.append(env.cumulative_reward)
+                training_durations.append(env.cumulative_duration)
 
             env.cumulative_reward = 0.
 
@@ -81,8 +88,11 @@ def run_HAC(FLAGS,env,agent, seed):
 
             # Average over the N test rollouts
             average_test_score = np.mean(test_rewards)
+            average_test_duration = np.mean(test_durations)
             validation_rewards.append(average_test_score)
+            validation_durations.append(average_test_duration)
             test_rewards = []
+            test_durations = []
 
             # Log performance
             success_rate = successful_episodes / num_test_episodes * 100
@@ -97,3 +107,8 @@ def run_HAC(FLAGS,env,agent, seed):
         cpickle.dump(training_rewards, f)
     with open("{}_{}_layer_HAC_validation_scores_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
         cpickle.dump(validation_rewards, f)
+    with open("{}_{}_layer_HAC_training_durations_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
+        cpickle.dump(training_durations, f)
+    with open("{}_{}_layer_HAC_validation_durations_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
+        cpickle.dump(validation_durations, f)
+

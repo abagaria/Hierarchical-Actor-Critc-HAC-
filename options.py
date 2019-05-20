@@ -110,7 +110,7 @@ def parse_options():
         help='Print summary of each transition'
     )
 
-    parser.add_argument("-seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=0)
 
     FLAGS, unparsed = parser.parse_known_args()
 
