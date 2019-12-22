@@ -133,7 +133,8 @@ class Agent():
     def train(self,env, episode_num, total_episodes):
 
         # Select initial state from in initial state space, defined in environment.py
-        self.current_state = env.reset_sim(training_time=(not self.FLAGS.test))
+        # self.current_state = env.reset_sim(training_time=(not self.FLAGS.test))
+        self.current_state = env.reset_sim()
         print("Initial State: ", self.current_state[:2])
 
         # Select final goal from final goal space, defined in "design_agent_and_env.py"
@@ -147,7 +148,7 @@ class Agent():
         goal_status, max_lay_achieved = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
 
         # Update actor/critic networks if not testing
-        if not self.FLAGS.test and total_episodes > 30:
+        if not self.FLAGS.test: # and total_episodes > 30: # TODO: FOR ANT ONLY
             self.learn()
 
         # Return whether end goal was achieved
