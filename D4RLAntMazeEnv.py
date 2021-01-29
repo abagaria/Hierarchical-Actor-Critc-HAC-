@@ -11,8 +11,8 @@ class D4RLAntMazeEnv(Environment):
         self.num_frames_skip = 5
 
         self.action_dim = self.mdp.action_space_size()
-        self.action_bounds = np.ones(self.action_dim)
-        self.action_offset = 0
+        self.action_bounds = np.ones((self.action_dim,))
+        self.action_offset = np.zeros_like(self.action_bounds)
 
         self.state_dim = self.mdp.state_space_size()
         self.subgoal_dim = 5

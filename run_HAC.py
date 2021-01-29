@@ -46,7 +46,7 @@ def train_loop(FLAGS, env, agent, seed):
         print("\nEpisode %d, Total Episodes: %d" % (episode, total_episodes))
         success = agent.train(env, episode, total_episodes)
 
-        print(f"[Testing] Episode {episode} \t Success {success}")
+        print(f"[Testing] Episode {episode} \t Success {success} \t Final State: {env.get_state()[:2]}")
         successes.append(success)
 
     return successes
