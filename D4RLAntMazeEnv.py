@@ -8,7 +8,7 @@ class D4RLAntMazeEnv(Environment):
 
         self.mdp = D4RLAntMazeMDP(maze_size=maze_type)
         self.sim = self.mdp.env.sim
-        self.num_frames_skip = 5
+        self.num_frames_skip = 15
 
         self.action_dim = self.mdp.action_space_size()
         self.action_bounds = np.ones((self.action_dim,))
@@ -89,7 +89,8 @@ class D4RLAntMazeEnv(Environment):
         self.goal_position = position
 
     def execute_action(self, action):
-        _, next_state = self.mdp.execute_agent_action(action)
+        for frame in range(self.num_frames_skip // 5):
+            _, next_state = self.mdp.execute_agent_action(action)
 
         reward, done = self.mdp.dense_gc_reward_function(next_state, self.goal_position, {})
         next_state.set_terminal(done)

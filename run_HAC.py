@@ -9,7 +9,7 @@ import pdb
 import numpy as np
 
 NUM_TEST_GOALS = 10
-NUM_TRAINING_EPISODES = 1000
+NUM_TRAINING_EPISODES = 333
 NUM_TESTING_EPISODES = 50
 
 def run_HAC(FLAGS,env,agent, seed):
