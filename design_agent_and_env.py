@@ -27,7 +27,7 @@ def design_agent_and_env(FLAGS):
 
     FLAGS.layers = 3    # Enter number of levels in agent hierarchy
 
-    FLAGS.time_scale = 11    # Enter max sequence length in which each policy will specialize
+    FLAGS.time_scale = 10    # Enter max sequence length in which each policy will specialize
 
     # Enter max number of atomic actions.  This will typically be FLAGS.time_scale**(FLAGS.layers).  However, in the UR5 Reacher task, we use a shorter episode length.
     max_actions = FLAGS.time_scale**(FLAGS.layers-1)*6
@@ -131,18 +131,16 @@ def design_agent_and_env(FLAGS):
     agent_params["subgoal_penalty"] = -FLAGS.time_scale     
 
     # Define exploration noise that is added to both subgoal actions and atomic actions.  Noise added is Gaussian N(0, noise_percentage * action_dim_range)    
-    agent_params["atomic_noise"] = [0.1 for i in range(2)]
-    agent_params["subgoal_noise"] = [0.1 for i in range(2)]
+    agent_params["atomic_noise"] = [0.2 for i in range(8)]   # 8 is the size of the primitive action space
+    agent_params["subgoal_noise"] = [0.2 for i in range(5)]  # 5 is the size of the higher level action space (subgoal dim)
 
     # Define number of episodes of transitions to be stored by each level of the hierarchy
     agent_params["episodes_to_store"] = 500
 
     # Provide training schedule for agent.  Training by default will alternate between exploration and testing.  Hyperparameter below indicates number of exploration episodes.  Testing occurs for 100 episodes.  To change number of testing episodes, go to "ran_HAC.py". 
-    agent_params["num_exploration_episodes"] = 1
+    agent_params["num_exploration_episodes"] = 100
 
     # For other relavent agent hyperparameters, please refer to the "agent.py" and "layer.py" files
-
-
 
     # Ensure environment customization have been properly entered
     # check_validity(model_name, goal_space_train, goal_space_test, end_goal_thresholds, initial_state_space, subgoal_bounds, subgoal_thresholds, max_actions, timesteps_per_action)

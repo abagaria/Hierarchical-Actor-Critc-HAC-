@@ -23,7 +23,7 @@ def moving_average(a, n=25):
  return ret[n-1:] / n
 
 
-def smoothen_data(scores, n=25):
+def smoothen_data(scores, n=10):
 	print(scores.shape)
 	smoothened_cols = scores.shape[1] - n + 1
 	smoothened_data = np.zeros((scores.shape[0], smoothened_cols))
@@ -51,7 +51,7 @@ def get_scores(log_dir, mode):
 	if "ddpg" in log_dir:
 		glob_pattern = log_dir + "/" + "*_{}_scores_*".format(mode)
 	else:
-		glob_pattern = log_dir + "/" + "*_{}_scores_*.pkl".format(mode)
+		glob_pattern = log_dir + "/" + "*_scores.pkl".format(mode)
 	for score_file in glob.glob(glob_pattern):
 	    print(score_file)
 	    with open(score_file, "rb") as f:
