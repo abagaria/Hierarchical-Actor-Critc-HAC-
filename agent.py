@@ -133,8 +133,8 @@ class Agent():
     def train(self,env, episode_num, total_episodes):
 
         # Select initial state from in initial state space, defined in environment.py
-        # self.current_state = env.reset_sim(training_time=(not self.FLAGS.test))
-        self.current_state = env.reset_sim()
+        self.current_state = env.reset_sim(training_time=(not self.FLAGS.test))
+        # self.current_state = env.reset_sim()
         print("Initial State: ", self.current_state[:2])
 
         # Select final goal from final goal space, defined in "design_agent_and_env.py"

@@ -72,10 +72,19 @@ class D4RLAntMazeEnv(Environment):
 
     def reset_sim(self, training_time):
         self.mdp.reset()
-        if not training_time:
-            s0 = self.mdp.get_position(self.mdp.sample_random_state())
-            self.mdp.set_xy(s0)
+        if training_time:
+            self.goal_position = self.mdp.get_position(self.mdp.sample_random_state())
         return self.get_state()
+
+    def reset_to_start_state(self, position):
+        print(f"[HAC-Test] Setting start state to {position}")
+        self.mdp.reset()
+        self.mdp.set_xy(position)
+        return self.get_state()
+
+    def set_goal_state(self, position):
+        print(f"[HAC-Test] Setting goal state to {position}")
+        self.goal_position = position
 
     def execute_action(self, action):
         _, next_state = self.mdp.execute_agent_action(action)
@@ -93,7 +102,8 @@ class D4RLAntMazeEnv(Environment):
         pass
 
     def get_next_goal(self, test):
-        return self.mdp.sample_random_state()
+        print(f"[HAC] Setting goal state to {self.goal_position}")
+        return self.goal_position
 
     def display_subgoals(self, subgoals):
         pass

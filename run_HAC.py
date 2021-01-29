@@ -8,107 +8,66 @@ from utils import print_summary
 import pdb
 import numpy as np
 
-
-TEST_FREQ = 2
-NUM_BATCH = 600 * TEST_FREQ
-
-num_test_episodes = 1
+NUM_TEST_GOALS = 10
+NUM_TRAINING_EPISODES = 1000
+NUM_TESTING_EPISODES = 50
 
 def run_HAC(FLAGS,env,agent, seed):
 
     # Print task summary
     print_summary(FLAGS,env)
 
+    training_successes = train_loop(FLAGS, env, agent, seed)
+
+    agent.save_model(NUM_TRAINING_EPISODES)
+    print(f"[HAC-Train] Finished training. Mean success rate: {np.mean(training_successes)}")
+
+    log = {}
+    start_states = [env.mdp.sample_random_state() for _ in range(NUM_TEST_GOALS)]
+    goal_states = [env.mdp.sample_random_state() for _ in range(NUM_TEST_GOALS)]
+
+    for start, goal in zip(start_states, goal_states):
+        testing_successes = test_loop(FLAGS, env, agent, start_state=start, goal_state=goal)
+        log[f"{start}, {goal}"] = {"successes": testing_successes}
+
+        with open(f"{env.name}_log_file.pkl", "wb+") as f:
+            cpickle.dump(log, f)
+
+
+def train_loop(FLAGS, env, agent, seed):
+
+    FLAGS.test = False
+
     total_episodes = 0
-    
-    # Determine training mode.  If not testing and not solely training, interleave training and testing to track progress
-    mix_train_test = False
-    if not FLAGS.test and not FLAGS.train_only:
-        mix_train_test = True
+    successes = []
 
-    training_rewards = []
-    validation_rewards = []
+    for episode in range(NUM_TRAINING_EPISODES):
 
-    training_durations = []
-    validation_durations = []
-     
-    for batch in range(NUM_BATCH):
+        print("\nEpisode %d, Total Episodes: %d" % (episode, total_episodes))
+        success = agent.train(env, episode, total_episodes)
 
-        num_episodes = agent.other_params["num_exploration_episodes"]
-        
-        # Evaluate policy every TEST_FREQ batches if interleaving training and testing
-        if mix_train_test and batch % TEST_FREQ == 0:
-            print("\n--- TESTING ---")
-            agent.FLAGS.test = True
-            num_episodes = num_test_episodes            
+        print(f"[Testing] Episode {episode} \t Success {success}")
+        successes.append(success)
 
-            # Reset successful episode counter
-            successful_episodes = 0
+    return successes
 
-            # Test rewards
-            test_rewards = []
-            test_durations = []
 
-        for episode in range(num_episodes):
-            
-            print("\nBatch %d, Episode %d, Total Episodes: %d" % (batch, episode, total_episodes))
-            env.cumulative_reward = 0.
-            env.cumulative_duration = 0
-            
-            # Train for an episode
-            success = agent.train(env, episode, total_episodes)
+def test_loop(FLAGS, env, agent, start_state, goal_state):
 
-            print("\t Got reward = {}".format(env.cumulative_reward))
+    FLAGS.test = True
 
-            if success:
-                print("Batch %d, Episode %d End Goal Achieved\n" % (batch, episode))
-                
-                # Increment successful episode counter if applicable
-                if mix_train_test and batch % TEST_FREQ == 0:
-                    successful_episodes += 1
+    total_episodes = 0
+    successes = []
 
-            if FLAGS.train_only or (mix_train_test and batch % TEST_FREQ != 0):
-                total_episodes += 1
+    for episode in range(NUM_TESTING_EPISODES):
 
-            # Based on whether we were training or testing, log the reward accumulated during the episode
-            if mix_train_test and batch % TEST_FREQ == 0:
-                test_rewards.append(env.cumulative_reward)
-                test_durations.append(env.cumulative_duration)
-            else:
-                training_rewards.append(env.cumulative_reward)
-                training_durations.append(env.cumulative_duration)
+        reset(env, start_state, goal_state)
+        success = agent.train(env, episode, total_episodes)
+        print(f"[Testing] Episode {episode} \t Success {success}")
+        successes.append(success)
 
-            env.cumulative_reward = 0.
+    return successes
 
-        # Save agent
-        agent.save_model(episode)
-           
-        # Finish evaluating policy if tested prior batch
-        if mix_train_test and batch % TEST_FREQ == 0:
-
-            # Average over the N test rollouts
-            average_test_score = np.mean(test_rewards)
-            average_test_duration = np.mean(test_durations)
-            validation_rewards.append(average_test_score)
-            validation_durations.append(average_test_duration)
-            test_rewards = []
-            test_durations = []
-
-            # Log performance
-            success_rate = successful_episodes / num_test_episodes * 100
-            print("\nTesting Success Rate %.2f%%" % success_rate)
-            print("\nAverage test Score = {:.2f}".format(average_test_score))
-            agent.log_performance(success_rate)
-            agent.FLAGS.test = False
-
-            print("\n--- END TESTING ---\n")
-
-    with open("{}_{}_layer_HAC_training_scores_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
-        cpickle.dump(training_rewards, f)
-    with open("{}_{}_layer_HAC_validation_scores_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
-        cpickle.dump(validation_rewards, f)
-    with open("{}_{}_layer_HAC_training_durations_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
-        cpickle.dump(training_durations, f)
-    with open("{}_{}_layer_HAC_validation_durations_{}.pkl".format(env.name, FLAGS.layers, seed), "wb+") as f:
-        cpickle.dump(validation_durations, f)
-
+def reset(env, start, goal):
+    env.reset_to_start_state(start)
+    env.set_goal_state(goal)
