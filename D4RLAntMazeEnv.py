@@ -72,11 +72,11 @@ class D4RLAntMazeEnv(Environment):
     def get_state(self):
         return self.mdp.cur_state.features()
 
-    def reset_sim(self, training_time):
-        self.mdp.reset()
-        if training_time:
-            self.goal_position = self.mdp.get_position(self.mdp.sample_random_state())
-        return self.get_state()
+    # def reset_sim(self, training_time):
+    #     self.mdp.reset()
+    #     if training_time:
+    #         self.goal_position = self.mdp.get_position(self.mdp.sample_random_state())
+    #     return self.get_state()
 
     def reset_to_start_state(self, position):
         print(f"[HAC-Test] Setting start state to {position}")
