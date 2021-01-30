@@ -79,13 +79,11 @@ class D4RLAntMazeEnv(Environment):
     #     return self.get_state()
 
     def reset_to_start_state(self, position):
-        print(f"[HAC-Test] Setting start state to {position}")
         self.mdp.reset()
         self.mdp.set_xy(position)
         return self.get_state()
 
     def set_goal_state(self, position):
-        print(f"[HAC-Test] Setting goal state to {position}")
         self.goal_position = position
 
     def execute_action(self, action):
