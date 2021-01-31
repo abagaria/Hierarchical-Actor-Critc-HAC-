@@ -7,7 +7,7 @@ class AntReacherEnv(Environment):
     def __init__(self):
 
         self.mdp = AntReacherMDP()
-        self.sim = self.mdp.env.sim
+        self.sim = self.mdp.env.env.sim
         self.num_frames_skip = 15
 
         self.action_dim = self.mdp.action_space_size()
