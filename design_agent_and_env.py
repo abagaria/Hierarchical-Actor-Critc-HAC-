@@ -5,6 +5,7 @@ This file provides the template for designing the agent and environment.  The be
 import numpy as np
 from environment import Environment
 from D4RLAntMazeEnv import D4RLAntMazeEnv
+from AntReacherEnv import AntReacherEnv
 from utils import check_validity
 from agent import Agent
 
@@ -146,8 +147,9 @@ def design_agent_and_env(FLAGS):
 
     # Instantiate and return agent and environment
     # env = Environment(model_name, goal_space_train, goal_space_test, project_state_to_end_goal, end_goal_thresholds, initial_state_space, subgoal_bounds, project_state_to_subgoal, subgoal_thresholds, max_actions, timesteps_per_action, FLAGS.show)
-    env = D4RLAntMazeEnv(maze_type="medium")
+    # env = D4RLAntMazeEnv(maze_type="medium")
     # env = AntMazeEnv(seed=FLAGS.seed, vary_init=True, dense_reward=False, render=False)
+    env = AntReacherEnv()
 
     agent = Agent(FLAGS,env,agent_params)
 
